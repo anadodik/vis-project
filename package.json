@@ -1,0 +1,37 @@
+{
+  "name": "svelte-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "sirv public --no-clear"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-terser": "^0.4.0",
+    "rollup": "^3.15.0",
+    "rollup-plugin-css-only": "^4.3.0",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-svelte": "^7.1.2",
+    "svelte": "^3.55.0"
+  },
+  "dependencies": {
+    "@floating-ui/dom": "^1.6.3",
+    "@turf/projection": "^6.5.0",
+    "@turf/turf": "^6.5.0",
+    "d3": "^7.9.0",
+    "mapbox-gl": "^3.2.0",
+    "maplibre-gl": "^4.1.2",
+    "minisearch": "^6.3.0",
+    "proj4": "^2.11.0",
+    "sirv-cli": "^2.0.0",
+    "svelte-maplibre": "^0.8.3",
+    "topojson": "^3.0.2",
+    "topojson-client": "^3.1.0",
+    "topojson-simplify": "^3.0.3",
+    "turf": "^3.0.14"
+  }
+}
