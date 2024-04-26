@@ -33,6 +33,7 @@
 	}
 
 	let data;
+	let densityData;
 	let dataLookup = {};
 	let geography;
 	$: features = [];
@@ -53,17 +54,37 @@
 				density: (+d.pop) / (+d.land_area_sq_miles_2020 * 2.59),
 			}),
 		);
+		densityData = await d3.csv(
+			"agg_density.csv", (d) => d
+		);
 		data.forEach((datum) => {
 			dataLookup[datum.muni_id] = datum;
+			densityData.forEach((densityDatum) => {
+				if (datum.municipal !== densityDatum.municipal) {
+					return;
+				}
+				dataLookup[datum.muni_id] = {
+					...dataLookup[datum.muni_id],
+					avg_zoned_density: densityDatum.avg_zoned_density,
+					avg_actual_density: densityDatum.avg_actual_density,
+				};
+			});
 		});
-		console.log(JSON.stringify(dataLookup));
+		// densityData.forEach((datum) => {
+		// 	console.log(densityData)
+		// 	dataLookup[datum.muni_id] = {
+		// 		...dataLookup[datum.muni_id],
+		// 		avg_zoned_density: datum.avg_zoned_density,
+		// 		avg_actual_density: datum.avg_actual_density,
+		// 	};
+		// });
+		// console.log(JSON.stringify(dataLookup));
 
 		geography = await d3.json(
 			"ma_municipalities.geojson",
 			// "Existing_Bike_Network_2022.geojson",
 			(g) => g,
 		);
-		// console.log(JSON.stringify(geography))
 		features = geography.features;
 		if (geography.crs.properties.name === "urn:ogc:def:crs:EPSG::26986") {
 			proj4.defs(
@@ -103,17 +124,19 @@
 				let area = turf.area(feature.geometry) / (1000 * 1000);
 				let pop = dataLookup[feature.properties.muni_id].pop;
 				let density = pop / area;
+				let zonedDensity = dataLookup[feature.properties.muni_id].avg_zoned_density;
 				feature.properties = {
 					...feature.properties,
-					"area": area,
-					"pop": pop,
-					"density": density,
+					"area": +area,
+					"pop": +pop,
+					"density": +density,
+					"zonedDensity": +zonedDensity,
 				};
 				dataLookup[feature.properties.muni_id]["area"] = area;
 				dataLookup[feature.properties.muni_id]["pop"] = pop;
 				dataLookup[feature.properties.muni_id]["density"] = density;
 			});
-
+			features = features.sort((a,b) => (a.properties.municipal > b.properties.municipal) ? 1 : ((b.properties.municipal > a.properties.municipal) ? -1 : 0))
 			minisearch = new MiniSearch({
 				fields: ["municipal", "muni_id"],
 				storeFields: ["municipal"],
@@ -148,12 +171,20 @@
 				source: "mass",
 				layout: {},
 				paint: {
-					"fill-color": "#0080ff",
+					"fill-color": [
+						"step",
+						["get", "zonedDensity"],
+						// "#e4f1e1",10,"#b4d9cc",100,"#89c0b6",1000,"#63a6a0",3000,"#448c8a",6000,"#287274",9000,"#0d585f",
+						// "#d1eeea",100,"#a8dbd9",500,"#85c4c9",1000,"#68abb8",3000,"#4f90a6",6000,"#3b738f",9000,"#2a5674"
+						// "#d1eeea",0,"#a8dbd9",25,"#85c4c9",50,"#68abb8",75,"#4f90a6",100,"#3b738f",120,"#2a5674"
+						"#d1eeea",0,"#a8dbd9",5,"#85c4c9",10,"#68abb8",20,"#4f90a6",50,"#3b738f",100,"#2a5674"
+						// "#ffeda0",10,"#ffeda0",50,"#fed976",100,"#feb24c",500,"#fd8d3c",1000,"#fc4e2a",2000,"#e31a1c",3000,"hsl(348, 100%, 37%)",6000,"#bd0026"
+					],
 					"fill-opacity": [
 						"case",
 						["boolean", ["feature-state", "hover"], false],
 						1,
-						0.5,
+						0.9,
 					],
 				},
 			});
@@ -211,7 +242,7 @@
 				};
 				centroids = [...centroids, centroid];
 			});
-			console.log(centroids);
+			// console.log(centroids);
 		});
 	});
 
@@ -256,7 +287,7 @@
 	{/if}.
 </div>
 
-<svg width="100%" height="100vh">
+<!-- <svg width="100%" height="100vh">
 	{#if dataLookup != {}}
 		{#key mapViewChanged}
 			{#each centroids as centroid}
@@ -281,7 +312,7 @@
 			{/each}
 		{/key}
 	{/if}
-</svg>
+</svg> -->
 
 <dl id="muni-tooltip" class="info tooltip" bind:this={tooltip} hidden={hoveredId === null}>
 	{#if hoveredProperties && hoveredData}
@@ -296,6 +327,9 @@
 
 		<dt>Average Density</dt>
 		<dd>{hoveredProperties.density.toFixed(2)}</dd>
+
+		<dt>Zoned Density</dt>
+		<dd>{hoveredProperties.zonedDensity}</dd>
 
 		<dt>Single Family</dt>
 		<dd>{(+hoveredData["%_single_family"]).toFixed(2)}%</dd>
