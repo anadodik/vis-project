@@ -261,6 +261,7 @@
 		let { x, y } = map.project(point);
 		return { cx: x, cy: y };
 	}
+
 </script>
 
 <head> </head>
@@ -286,6 +287,17 @@
 		{/if}
 	{/if}.
 </div>
+
+<!-- "#d1eeea",0,"#a8dbd9",5,"#85c4c9",10,"#68abb8",20,"#4f90a6",50,"#3b738f",100,"#2a5674" -->
+<div id="density-legend" class="legend">
+    <h4>Density (dwelling units per acre)</h4>
+    <div><span style="background-color: #a8dbd9"></span>0-1.13</div>
+    <div><span style="background-color: #85c4c9"></span>1.14-1.22</div>
+    <div><span style="background-color: #68abb8"></span>1.23-1.38</div>
+    <div><span style="background-color: #4f90a6"></span>1.39-1.63</div>
+    <div><span style="background-color: #3b738f"></span>1.64-3.40</div>
+</div>
+
 
 <!-- <svg width="100%" height="100vh">
 	{#if dataLookup != {}}
@@ -429,4 +441,41 @@
 		top: 1em;
 		left: 1em;
 	}
+
+	.map-overlay {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: #fff;
+        margin-right: 20px;
+        font-family: monospace;
+        overflow: auto;
+        border-radius: 3px;
+    }
+
+	.legend {
+        background-color: #fff;
+        border-radius: 3px;
+        top: 30px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        font:
+            20px/30px monospace;
+        padding: 10px;
+        position: absolute;
+        right: 10px;
+        z-index: 1;
+    }
+
+    .legend h4 {
+        margin: 0 0 10px;
+    }
+
+    .legend div span {
+        border-radius: 50%;
+        display: inline-block;
+        height: 10px;
+        margin-right: 5px;
+        width: 10px;
+    }
+
 </style>
