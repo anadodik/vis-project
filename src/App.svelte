@@ -1,13 +1,17 @@
 <script>
 	import { Map, LngLat } from "mapbox-gl";
 	import "../node_modules/mapbox-gl/dist/mapbox-gl.css";
+	import Icon from 'fa-svelte'
+	import { faXmarkSquare } from '@fortawesome/free-solid-svg-icons/faXmarkSquare'
+	import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark'
 	import { onMount, onDestroy } from "svelte";
 	import * as d3 from "d3";
 	import proj4 from "proj4";
 	import * as turf from "@turf/turf";
 	import MiniSearch from "minisearch";
 	import { computePosition, autoPlacement, offset } from "@floating-ui/dom";
-
+	
+	let icon = faXmark;
 	let map;
 	let mapContainer;
 	let mapViewChanged = 0;
@@ -20,24 +24,37 @@
 	let lng, lat, zoom;
 	let tooltip;
 	let tooltipPosition = {x: 0, y: 0};
-
 	let minisearch;
-	let targetMuni;
-	let sourceMuni;
-	let counterfactualHousing = null;
-	$: console.log(sourceMuni);
-	$: {
-		if (targetMuni && sourceMuni) {
-			counterfactualHousing = Math.floor(dataLookup[targetMuni].area * dataLookup[sourceMuni].density) - dataLookup[targetMuni].pop;
-		}
-	}
-
 	let data;
 	let densityData;
 	let dataLookup = {};
 	let geography;
+	$: visToggle = true;
+	$: visFeature = "dwellingDensity";
+	$: {
+		console.log(visToggle);
+		if (visToggle) {
+			visFeature = "dwellingDensity";
+		} else {
+			visFeature =  "zonedDensity";
+		}
+	}
+	let densityCmap = ["#d1eeea",1e-3,"#a8dbd9",1.129606099,"#85c4c9",1.217380321,"#68abb8",1.377882152,"#4f90a6",1.631587289,"#3b738f",3.396340725,"#2a5674"];
+	let zonedDensityCmap = ["#d1eeea",1e-3,"#a8dbd9",1.993243243,"#85c4c9",3,"#68abb8",4.513858696,"#4f90a6",6.170743498,"#3b738f",51.51252103,"#2a5674"];
 	$: features = [];
 	$: centroids = [];
+	let targetMuni;
+	let sourceMuni;
+	let counterfactualHousing = null;
+	
+	$: console.log(sourceMuni);
+	$: {
+		if (targetMuni && sourceMuni) {
+			counterfactualHousing = Math.floor(dataLookup[targetMuni].area * dataLookup[sourceMuni].density) - dataLookup[targetMuni].pop;
+		} else {
+			counterfactualHousing = null;
+		}
+	}
 
 	lng = -71.224518;
 	lat = 42.213995;
@@ -124,17 +141,20 @@
 				let area = turf.area(feature.geometry) / (1000 * 1000);
 				let pop = dataLookup[feature.properties.muni_id].pop;
 				let density = pop / area;
+				let dwellingDensity = dataLookup[feature.properties.muni_id].avg_actual_density;
 				let zonedDensity = dataLookup[feature.properties.muni_id].avg_zoned_density;
 				feature.properties = {
 					...feature.properties,
 					"area": +area,
 					"pop": +pop,
 					"density": +density,
+					"dwellingDensity": +dwellingDensity,
 					"zonedDensity": +zonedDensity,
 				};
 				dataLookup[feature.properties.muni_id]["area"] = area;
 				dataLookup[feature.properties.muni_id]["pop"] = pop;
 				dataLookup[feature.properties.muni_id]["density"] = density;
+				dataLookup[feature.properties.muni_id]["geometry"] = feature.geometry;
 			});
 			features = features.sort((a,b) => (a.properties.municipal > b.properties.municipal) ? 1 : ((b.properties.municipal > a.properties.municipal) ? -1 : 0))
 			minisearch = new MiniSearch({
@@ -156,6 +176,10 @@
 			style: `mapbox://styles/mapbox/light-v9`,
 			center: [initialState.lng, initialState.lat],
 			zoom: initialState.zoom,
+			transition: {
+				"duration": 1200,
+				"delay": 0
+			}
 		});
 
 		map.on("load", () => {
@@ -173,11 +197,12 @@
 				paint: {
 					"fill-color": [
 						"step",
-						["get", "zonedDensity"],
+						["get", "dwellingDensity"],
+						"#d1eeea",0,"#a8dbd9",1.129606099,"#85c4c9",1.217380321,"#68abb8",1.377882152,"#4f90a6",1.631587289,"#3b738f",3.396340725,"#2a5674"
 						// "#e4f1e1",10,"#b4d9cc",100,"#89c0b6",1000,"#63a6a0",3000,"#448c8a",6000,"#287274",9000,"#0d585f",
 						// "#d1eeea",100,"#a8dbd9",500,"#85c4c9",1000,"#68abb8",3000,"#4f90a6",6000,"#3b738f",9000,"#2a5674"
 						// "#d1eeea",0,"#a8dbd9",25,"#85c4c9",50,"#68abb8",75,"#4f90a6",100,"#3b738f",120,"#2a5674"
-						"#d1eeea",0,"#a8dbd9",5,"#85c4c9",10,"#68abb8",20,"#4f90a6",50,"#3b738f",100,"#2a5674"
+						
 						// "#ffeda0",10,"#ffeda0",50,"#fed976",100,"#feb24c",500,"#fd8d3c",1000,"#fc4e2a",2000,"#e31a1c",3000,"hsl(348, 100%, 37%)",6000,"#bd0026"
 					],
 					"fill-opacity": [
@@ -236,6 +261,7 @@
 
 			features.forEach(function (feature) {
 				let centroid = turf.centerOfMass(feature.geometry);
+				// let centroid = turf.centerOfMass(turf.bboxPolygon(turf.bbox(feature.geometry)));
 				centroid = {
 					...centroid,
 					properties: feature.properties,
@@ -259,72 +285,176 @@
 	function projectCentroid(centroid) {
 		let point = new LngLat(+centroid[0], +centroid[1]);
 		let { x, y } = map.project(point);
-		return { cx: x, cy: y };
+		return { x: x, y: y };
 	}
 
+	function paintMap() {
+		let cmap;
+		if (visFeature == "dwellingDensity") {
+			cmap = densityCmap
+		} else {
+			cmap = zonedDensityCmap;
+		}
+		if (sourceMuni && targetMuni) {
+			map.style.stylesheet.layers.forEach(function(layer) {
+				if (layer.type === 'symbol') {
+					map.setLayoutProperty(layer.id,"visibility", "none");
+				}
+			});
+			let geometry = turf.union(
+				dataLookup[sourceMuni]["geometry"],
+				dataLookup[targetMuni]["geometry"],
+			);
+			map.fitBounds(turf.bbox(geometry), {
+				padding: { top: 100, bottom: 100, left: 100, right: 100},
+				easing: (t) => {return t*t*t},
+				duration: 1000,
+			});
+			map?.setPaintProperty(
+				'mass-layer',
+				'fill-color',
+				[
+					"step",
+					[
+						"case",
+						["==", ["get", "muni_id"], targetMuni], ["get", visFeature], 
+						["==", ["get", "muni_id"], sourceMuni], ["get", visFeature], 
+						-1
+					],
+					"#DDDDDD",0,...cmap
+				]
+			);
+			map?.setPaintProperty(
+				"mass-layer",
+				"fill-opacity",
+				[
+					"*", [
+						"case",
+						["boolean", ["feature-state", "hover"], false],
+						1,
+						0.9,
+					], [
+						"case",
+						["==", ["get", "muni_id"], targetMuni], 1, 
+						["==", ["get", "muni_id"], sourceMuni], 1, 
+						0.5,
+					]
+				]
+			);
+		}
+		else {
+			map.style.stylesheet.layers.forEach(function(layer) {
+				if (layer.type === 'symbol') {
+					map.setLayoutProperty(layer.id, "visibility", "visible");
+				}
+			});
+			map.fitBounds(turf.bbox(geography), {
+				padding: { top: 10, bottom: 25, left: 15, right: 5 },
+			});
+			map?.setPaintProperty(
+				"mass-layer",
+				"fill-color",
+				[
+					"step",
+					["get", visFeature],
+					...cmap
+				]
+			);
+			map?.setPaintProperty(
+				"mass-layer",
+				"fill-opacity",
+				[
+					"case",
+					["boolean", ["feature-state", "hover"], false],
+					1,
+					0.9,
+				]
+			);
+		}
+	}
 </script>
 
 <head> </head>
 
 <div class="sidebar">
 	If
-	<select bind:value={targetMuni}>
+	<select bind:value={targetMuni} on:change={paintMap}>
 		{#each features as feature}
 			<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
 		{/each}
 	</select>
 	had the density of
-	<select bind:value={sourceMuni}>
+	<select bind:value={sourceMuni} on:change={paintMap}>
 		{#each features as feature}
 			<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
 		{/each}
 	</select>
 	{#if counterfactualHousing}
 		{#if counterfactualHousing >= 0}
-			we would <b>house {counterfactualHousing}</b> more people
+			we would <b>house {counterfactualHousing}</b> more people.
 		{:else}
-			we would <b>displace {-counterfactualHousing}</b> people
+			we would <b>displace {-counterfactualHousing}</b> people.
 		{/if}
-	{/if}.
+		<button type="button" id="resetButton" on:click={()=>{targetMuni = null; sourceMuni = null; paintMap()}}>
+			<Icon class="resetIcon" icon={icon}></Icon>
+		</button>
+	{:else}
+	...
+	{/if}
 </div>
 
 <!-- "#d1eeea",0,"#a8dbd9",5,"#85c4c9",10,"#68abb8",20,"#4f90a6",50,"#3b738f",100,"#2a5674" -->
 <div id="density-legend" class="legend">
-    <h4>Density (dwelling units per acre)</h4>
-    <div><span style="background-color: #a8dbd9"></span>0-1.13</div>
-    <div><span style="background-color: #85c4c9"></span>1.14-1.22</div>
-    <div><span style="background-color: #68abb8"></span>1.23-1.38</div>
-    <div><span style="background-color: #4f90a6"></span>1.39-1.63</div>
-    <div><span style="background-color: #3b738f"></span>1.64-3.40</div>
+	<label class="switch">
+		<input type="checkbox" bind:checked={visToggle} on:change={paintMap}>
+		<span class="slider round"></span>
+	</label>
+	{#if visFeature === "dwellingDensity"}
+	<div on:outrostart={e => e.target.classList.add('isFading')}
+		on:introstart={e => e.target.classList.remove('isFading')}>
+		<h4>Density</h4> <p>(dwelling units per acre)</p>
+		<div><span style="background-color: #a8dbd9"></span>0.00-1.13</div>
+		<div><span style="background-color: #85c4c9"></span>1.13-1.22</div>
+		<div><span style="background-color: #68abb8"></span>1.22-1.38</div>
+		<div><span style="background-color: #4f90a6"></span>1.38-1.63</div>
+		<div><span style="background-color: #3b738f"></span>1.63-3.40</div>
+	</div>
+	{:else}
+	<div on:outrostart={e => e.target.classList.add('isFading')}
+		on:introstart={e => e.target.classList.remove('isFading')}>
+		<h4>Zoned Density</h4> <p>(dwelling units per acre)</p>
+		<div><span style="background-color: #a8dbd9"></span>0.00-1.99</div>
+		<div><span style="background-color: #85c4c9"></span>1.99-3.00</div>
+		<div><span style="background-color: #68abb8"></span>3.00-4.51</div>
+		<div><span style="background-color: #4f90a6"></span>4.51-6.17</div>
+		<div><span style="background-color: #3b738f"></span>6.17-51.50</div>
+	</div>
+	{/if}
 </div>
 
-
-<!-- <svg width="100%" height="100vh">
-	{#if dataLookup != {}}
-		{#key mapViewChanged}
-			{#each centroids as centroid}
-				<p>
-					{centroid.properties.muni_id}: {centroid.properties.area}
-				</p>
-				<circle
-					r={Math.sqrt(centroid.properties.density) / 10}
-					opacity=0.7
-					fill="#daa520"
-					stroke="#daa520"
-					stroke-width=1
-					stroke-opacity=1
-					{...projectCentroid(centroid.geometry.coordinates)}
-					on:mouseenter={(evt) => {
-						hoveredProperties = centroid.properties;
-						cursor = { x: evt.x, y: evt.y };
-					}}
-				>
-					<title>{centroid.properties.municipal}</title>
-				</circle>
-			{/each}
-		{/key}
-	{/if}
-</svg> -->
+{#if dataLookup != {} && sourceMuni && targetMuni}
+	<svg width="100%" height="100vh">
+		<style>
+			.text {
+				font: 16px sans-serif;
+			}
+		</style>
+			{#key mapViewChanged}
+				{#each centroids as centroid}
+					{#if centroid.properties.muni_id == sourceMuni || centroid.properties.muni_id == targetMuni}
+						<text
+							class="text"
+							dominant-baseline="middle"
+							text-anchor="middle"
+							{...projectCentroid(centroid.geometry.coordinates)}
+						>
+							{centroid.properties.municipal}
+						</text>
+						{/if}
+				{/each}
+			{/key}
+	</svg>
+{/if}
 
 <dl id="muni-tooltip" class="info tooltip" bind:this={tooltip} hidden={hoveredId === null}>
 	{#if hoveredProperties && hoveredData}
@@ -341,10 +471,7 @@
 		<dd>{hoveredProperties.density.toFixed(2)}</dd>
 
 		<dt>Zoned Density</dt>
-		<dd>{hoveredProperties.zonedDensity}</dd>
-
-		<dt>Single Family</dt>
-		<dd>{(+hoveredData["%_single_family"]).toFixed(2)}%</dd>
+		<dd>{hoveredProperties.zonedDensity.toFixed(2)}</dd>
 	{/if}
 </dl>
 
@@ -385,7 +512,7 @@
 	.sidebar {
 		background-color: rgb(35 55 75 / 90%);
 		color: #fff;
-		padding: 6px 12px;
+		padding: 12px 12px 12px 12px;
 		font-family: monospace;
 		z-index: 2;
 		position: absolute;
@@ -394,18 +521,42 @@
 		margin: 12px;
 		border-radius: 4px;
 	}
+
+	.sidebar select {
+		padding: 3px;
+		margin: 0;
+		vertical-align: middle;
+	}
+
+	#resetButton {
+		padding: 1px;
+		margin: 0;
+		vertical-align: middle;
+		color: oklch(70.95% 0.0937 76.31);
+		background-color: rgba(0.0, 0.0, 0.0, 0.0);
+		border: none;
+	}
+
+	#resetButton :global(.resetIcon) {
+		padding: 0;
+		margin: 0;
+		font-size: 1.8em;
+		vertical-align: text-bottom;
+	}
+
 	dl.info {
 		width: max-content;
 		position: absolute;
-		top: 3em;
-		left: 1em;
+		top: 0;
+		right: 0;
+		margin: 12px;
 		
 		display: grid;
-		grid-auto-columns: 9em;
+		grid-auto-columns: 8em;
 		grid-auto-flow: column;
 		z-index: 3;
 		background-color: rgb(255 255 255 / 100%);
-		box-shadow: 0px 0px 10px black;
+		box-shadow: 0px 0px 5px oklch(50% 0 0);
 		border-radius: 5px;
 		padding-top: 10px;
 		padding-bottom: 10px;
@@ -439,7 +590,7 @@
 	.tooltip {
 		position: fixed;
 		top: 1em;
-		left: 1em;
+		right: 1em;
 	}
 
 	.map-overlay {
@@ -455,11 +606,12 @@
 
 	.legend {
         background-color: #fff;
-        border-radius: 3px;
-        top: 30px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        bottom: 30px;
+		box-shadow: 0px 0px 5px oklch(50% 0 0);
+        border-radius: 5px;
         font:
             20px/30px monospace;
+		text-align: right;
         padding: 10px;
         position: absolute;
         right: 10px;
@@ -467,15 +619,82 @@
     }
 
     .legend h4 {
-        margin: 0 0 10px;
+		font-size: 1.5rem;
+        margin: 0;
+    }
+    .legend p {
+		font-size: 0.8rem;
+        margin: 0 0 10px 0;
+		/* font-family: sans-serif; */
     }
 
     .legend div span {
         border-radius: 50%;
         display: inline-block;
-        height: 10px;
+        height: 1rem;
+        width: 1rem;
         margin-right: 5px;
-        width: 10px;
+		vertical-align: baseline;
     }
+
+	.switch {
+		position: relative;
+		display: inline-block;
+		width: 3rem;
+		height: 1.5rem;
+	}
+
+	.switch input {
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.slider {
+		position: absolute;
+		cursor: pointer;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #ccc;
+		-webkit-transition: .4s;
+		transition: .4s;
+	}
+
+	.slider:before {
+		position: absolute;
+		content: "";
+		height: 1rem;
+		width: 1rem;
+		left: 4px;
+		bottom: 4px;
+		background-color: white;
+		-webkit-transition: .4s;
+		transition: .4s;
+	}
+
+	input:checked + .slider {
+		background-color: #2196F3;
+	}
+
+	input:focus + .slider {
+		box-shadow: 0 0 1px #2196F3;
+	}
+
+	input:checked + .slider:before {
+		-webkit-transform: translateX(1.5rem);
+		-ms-transform: translateX(1.5rem);
+		transform: translateX(1.5rem);
+	}
+
+	/* Rounded sliders */
+	.slider.round {
+		border-radius: 1.0rem;
+	}
+
+	.slider.round:before {
+		border-radius: 50%;
+	}
 
 </style>
