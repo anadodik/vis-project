@@ -62,6 +62,18 @@
 
 	onMount(async function () {
 		const initialState = { lng: lng, lat: lat, zoom: zoom };
+		const container = document.querySelector('.fullpage');
+		const items = document.querySelectorAll('.section');
+
+		container.addEventListener('wheel', (event) => {
+		event.preventDefault();
+		const delta = event.deltaY;
+
+		container.scrollBy({
+			top: delta,
+			behavior: 'smooth'
+		});
+		});
 
 		data = await d3.csv(
 			"housing_census_municipalities_compliance.csv",
@@ -376,107 +388,245 @@
 
 <head> </head>
 
-<div class="sidebar">
-	If
-	<select bind:value={targetMuni} on:change={paintMap}>
-		{#each features as feature}
-			<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
-		{/each}
-	</select>
-	had the density of
-	<select bind:value={sourceMuni} on:change={paintMap}>
-		{#each features as feature}
-			<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
-		{/each}
-	</select>
-	{#if counterfactualHousing}
-		{#if counterfactualHousing >= 0}
-			we would <b>house {counterfactualHousing}</b> more people.
-		{:else}
-			we would <b>displace {-counterfactualHousing}</b> people.
-		{/if}
-		<button type="button" id="resetButton" on:click={()=>{targetMuni = null; sourceMuni = null; paintMap()}}>
-			<Icon class="resetIcon" icon={icon}></Icon>
-		</button>
-	{:else}
-	...
-	{/if}
-</div>
 
-<!-- "#d1eeea",0,"#a8dbd9",5,"#85c4c9",10,"#68abb8",20,"#4f90a6",50,"#3b738f",100,"#2a5674" -->
-<div id="density-legend" class="legend">
-	<label class="switch">
-		<input type="checkbox" bind:checked={visToggle} on:change={paintMap}>
-		<span class="slider round"></span>
-	</label>
-	{#if visFeature === "dwellingDensity"}
-	<div on:outrostart={e => e.target.classList.add('isFading')}
-		on:introstart={e => e.target.classList.remove('isFading')}>
-		<h4>Density</h4> <p>(dwelling units per acre)</p>
-		<div><span style="background-color: #a8dbd9"></span>0.00-1.13</div>
-		<div><span style="background-color: #85c4c9"></span>1.13-1.22</div>
-		<div><span style="background-color: #68abb8"></span>1.22-1.38</div>
-		<div><span style="background-color: #4f90a6"></span>1.38-1.63</div>
-		<div><span style="background-color: #3b738f"></span>1.63-3.40</div>
+<div class="fullpage">
+	<div class="section">
+		<div class="text-wrap">
+			<h1 style="font-size: 6rem;">Policy ---> <mark>Reality</mark>
+			</h1>
+		</div>
+
 	</div>
-	{:else}
-	<div on:outrostart={e => e.target.classList.add('isFading')}
-		on:introstart={e => e.target.classList.remove('isFading')}>
-		<h4>Zoned Density</h4> <p>(dwelling units per acre)</p>
-		<div><span style="background-color: #a8dbd9"></span>0.00-1.99</div>
-		<div><span style="background-color: #85c4c9"></span>1.99-3.00</div>
-		<div><span style="background-color: #68abb8"></span>3.00-4.51</div>
-		<div><span style="background-color: #4f90a6"></span>4.51-6.17</div>
-		<div><span style="background-color: #3b738f"></span>6.17-51.50</div>
+
+	<div class="section">
+		<div class="text-wrap"  style="top: 35%">
+			<h1 style="font-size: 3rem;">Massachusetts has the <mark>5th most expensive</mark> housing prices in the country.</h1>
+			<h1>
+				Nearly <mark>half</mark> of the state’s renters are <mark>rent-burdened</mark> while a
+				<mark>quarter</mark> are <mark>severely rent-burdened</mark>.
+			</h1>
+			<h1 style="font-size: 1.6rem;">Our housing market is extremely saturated with <mark>rental vacancy rates at just 2.4%</mark>.
+			</h1>
+			<h1 style="font-size: 1.6rem;">There is estimated to be a shortage of <mark>125,000-200,000 housing units by 2030</mark>, with <mark>35,000-110,000 new
+				units</mark> required just to meet current demand.
+			</h1>
+
+		</div>
+		<img src="home.png" alt="home" style="position: absolute; bottom: 0; right: 0; width: 35%;">
+
 	</div>
-	{/if}
-</div>
+	<div class="section">
+		<div class="text-wrap"  style="top: 50%">
+			<h1 style="font-size: 1.85rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
+			</h1>
+			<h1 style="font-size: 1.4rem;">
+				One way to encourage this is to ensure that local laws allow for <mark>higher density housing*</mark>.
+			</h1>
 
-{#if dataLookup != {} && sourceMuni && targetMuni}
-	<svg width="100%" height="100vh">
-		<style>
-			.text {
-				font: 16px sans-serif;
-			}
-		</style>
-			{#key mapViewChanged}
-				{#each centroids as centroid}
-					{#if centroid.properties.muni_id == sourceMuni || centroid.properties.muni_id == targetMuni}
-						<text
-							class="text"
-							dominant-baseline="middle"
-							text-anchor="middle"
-							{...projectCentroid(centroid.geometry.coordinates)}
-						>
-							{centroid.properties.municipal}
-						</text>
-						{/if}
-				{/each}
-			{/key}
-	</svg>
-{/if}
+			<img src="home_2.png" alt="home" style="width: 70%; padding-top: 50px;">
+			<h1 style="font-size: .7rem;">
+				*Housing density can be defined as the average number of dwelling units per acre (du/ac).
+			</h1>
+		</div>
 
-<dl id="muni-tooltip" class="info tooltip" bind:this={tooltip} hidden={hoveredId === null}>
-	{#if hoveredProperties && hoveredData}
-		<dt>Municipality</dt>
-		<dd>{hoveredProperties.municipal}</dd>
+	</div>
+	<div class="section">
+		<div class="text-wrap" style="font-size: 1.5rem;">
+			<h1>How might <mark>zoning</mark> allow for more <mark>density</mark>?</h1>
+		</div>
 
-		<dt>Population</dt>
-		<dd>{hoveredProperties.pop}</dd>
+	</div>
+	<div class="section">
+		<div class="text-wrap" style="top: 50%">
+			<h1>One example of increasing neighborhood density is building an <mark>accessory dwelling unit (ADU)</mark>.
+			</h1>
+			<img src="houses.png" alt="home" style="width: 75%; padding-top: 20px; padding-bottom: 20px;">
+			<h1 style="font-size: 1.3rem;">
+				Sometimes called “granny flats”, ADU’s can introduce some <mark>gentle density</mark> into a neighborhood and
+				often increase property values. They can allow for multi-generational living or even be rented out.
+			</h1>
+			<h1 style="font-size: 2.05rem;">ADU’s are often <mark>prohibited by local laws</mark>, but new laws to allow ADU’s have recently been adopted in
+				places like Somerville!
+			</h1>
 
-		<dt>Area</dt>
-		<dd>{hoveredProperties.area.toFixed(2)}<sup>2</sup> </dd>
+		</div>
+	</div>
+	<div class="section">
+		<div class="text-wrap" style="top: 50%">
+			<h1 style="font-size: 1.5rem;">
+				Another example of density-friendly adaptations are <mark>single family home conversions</mark>.
+			</h1>
+			<h1 style="font-size: 1.5rem;">
+				This involves renovating a single house into multiple individual units.
+			</h1>
+			<img src="site_plan_condo.jpeg" alt="home" style="width: 65%;">
+			<h1  style="font-size: 1rem; padding-top: 20px;">
+				These homes often blend right in with the rest of the neighborhood, even preserving some historic homes.
+			</h1>
+			<h1 style="font-size: 1rem;">
+				In an area that is zoned for single family homes only, this type of conversion would not be possible because it would exceed the allowable dwelling units per acre. 
+			</h1>
 
-		<dt>Average Density</dt>
-		<dd>{hoveredProperties.density.toFixed(2)}</dd>
+		</div>
+	</div>
+	<div class="section">
+		<div class="text-wrap" style="font-size: 1.5rem;">
+			<h1>What do different levels of <mark>housing density</mark> look like in the Boston area?</h1>
+		</div>
 
-		<dt>Zoned Density</dt>
-		<dd>{hoveredProperties.zonedDensity.toFixed(2)}</dd>
-	{/if}
-</dl>
+	</div>
+	<div class="section">
+		<div class="text-wrap" style="top: 50%;">
+			<h1 style="font-size: 1.3rem;">
+				<mark style="font-size: 2.2rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
+			</h1>
+			<img src="street1.png" alt="home" style="width: 90%; padding-top: 20px;">
+			<h1 style="font-size: .9rem;  padding-top: 10px;">
+				Average density: <u>1.2 du/ac</u>.
+			</h1>
 
-<div class="map-wrap">
-	<div class="map" bind:this={mapContainer} />
+		</div>
+	</div>
+
+	<div class="section">
+		<div class="text-wrap" style="top: 50%;">
+			<h1 style="font-size: 1.3rem;">
+				<mark style="font-size: 2.2rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
+			</h1>
+			<img src="street2.png" alt="home" style="width: 90%; padding-top: 20px;">
+			<h1 style="font-size: .9rem;  padding-top: 10px;">
+				Average density: <u>2.2 du/ac</u>.
+			</h1>
+
+		</div>
+	</div>
+
+
+	<div class="section">
+		<div class="text-wrap" style="top: 50%;">
+			<h1 style="font-size: 1.3rem;">
+				<mark style="font-size: 2.2rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
+			</h1>
+			<img src="street3.png" alt="home" style="width: 90%; padding-top: 20px;">
+			<h1 style="font-size: .9rem;  padding-top: 10px;">
+				Average density: <u>3.4 du/ac</u>.
+			</h1>
+
+		</div>
+	</div>
+
+	<div class="section">
+		<div class="text-wrap" >
+			<h1 style="font-size: 3rem;">How many more people could we house if we <mark>up-zoned</mark> Massachusetts?
+			</h1>
+		</div>
+
+	</div>
+
+	<div class="section">
+		<div class="map-wrap">
+			<div class="sidebar">
+				If
+				<select bind:value={targetMuni} on:change={paintMap}>
+					{#each features as feature}
+						<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
+					{/each}
+				</select>
+				had the density of
+				<select bind:value={sourceMuni} on:change={paintMap}>
+					{#each features as feature}
+						<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
+					{/each}
+				</select>
+				{#if counterfactualHousing}
+					{#if counterfactualHousing >= 0}
+						we would <b>house {counterfactualHousing}</b> more people.
+					{:else}
+						we would <b>displace {-counterfactualHousing}</b> people.
+					{/if}
+					<button type="button" id="resetButton" on:click={()=>{targetMuni = null; sourceMuni = null; paintMap()}}>
+						<Icon class="resetIcon" icon={icon}></Icon>
+					</button>
+				{:else}
+				...
+				{/if}
+			</div>
+
+			<!-- "#d1eeea",0,"#a8dbd9",5,"#85c4c9",10,"#68abb8",20,"#4f90a6",50,"#3b738f",100,"#2a5674" -->
+			<div id="density-legend" class="legend">
+				<label class="switch">
+					<input type="checkbox" bind:checked={visToggle} on:change={paintMap}>
+					<span class="slider round"></span>
+				</label>
+				{#if visFeature === "dwellingDensity"}
+				<div on:outrostart={e => e.target.classList.add('isFading')}
+					on:introstart={e => e.target.classList.remove('isFading')}>
+					<h4>Density</h4> <p>(dwelling units per acre)</p>
+					<div><span style="background-color: #a8dbd9"></span>0.00-1.13</div>
+					<div><span style="background-color: #85c4c9"></span>1.13-1.22</div>
+					<div><span style="background-color: #68abb8"></span>1.22-1.38</div>
+					<div><span style="background-color: #4f90a6"></span>1.38-1.63</div>
+					<div><span style="background-color: #3b738f"></span>1.63-3.40</div>
+				</div>
+				{:else}
+				<div on:outrostart={e => e.target.classList.add('isFading')}
+					on:introstart={e => e.target.classList.remove('isFading')}>
+					<h4>Zoned Density</h4> <p>(dwelling units per acre)</p>
+					<div><span style="background-color: #a8dbd9"></span>0.00-1.99</div>
+					<div><span style="background-color: #85c4c9"></span>1.99-3.00</div>
+					<div><span style="background-color: #68abb8"></span>3.00-4.51</div>
+					<div><span style="background-color: #4f90a6"></span>4.51-6.17</div>
+					<div><span style="background-color: #3b738f"></span>6.17-51.50</div>
+				</div>
+				{/if}
+			</div>
+
+			{#if dataLookup != {} && sourceMuni && targetMuni}
+				<svg width="100%" height="100vh">
+					<style>
+						.text {
+							font: 16px sans-serif;
+						}
+					</style>
+						{#key mapViewChanged}
+							{#each centroids as centroid}
+								{#if centroid.properties.muni_id == sourceMuni || centroid.properties.muni_id == targetMuni}
+									<text
+										class="text"
+										dominant-baseline="middle"
+										text-anchor="middle"
+										{...projectCentroid(centroid.geometry.coordinates)}
+									>
+										{centroid.properties.municipal}
+									</text>
+									{/if}
+							{/each}
+						{/key}
+				</svg>
+			{/if}
+
+			<dl id="muni-tooltip" class="info tooltip" bind:this={tooltip} hidden={hoveredId === null}>
+				{#if hoveredProperties && hoveredData}
+					<dt>Municipality</dt>
+					<dd>{hoveredProperties.municipal}</dd>
+
+					<dt>Population</dt>
+					<dd>{hoveredProperties.pop}</dd>
+
+					<dt>Area</dt>
+					<dd>{hoveredProperties.area.toFixed(2)}<sup>2</sup> </dd>
+
+					<dt>Average Density</dt>
+					<dd>{hoveredProperties.density.toFixed(2)}</dd>
+
+					<dt>Zoned Density</dt>
+					<dd>{hoveredProperties.zonedDensity.toFixed(2)}</dd>
+				{/if}
+			</dl>
+			<div class="map" bind:this={mapContainer} />
+		</div>
+
+	</div>
 </div>
 
 <style>
@@ -696,5 +846,86 @@
 	.slider.round:before {
 		border-radius: 50%;
 	}
+	h1{
+		color: #595959;
+		/* width: 75%; */
+	}
 
+	.text-wrap {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            text-align: center;
+            font-size: .9rem;
+            font-family: 'Arial';
+        }
+
+	.section {
+		text-align: center;
+		font-size: 14px;
+		/* padding: 40px; */
+  	}
+
+
+	.fullpage {
+		position: relative;
+		width: 100%;
+		height: 100vh;
+		scroll-behavior: smooth;
+		overflow-y: scroll;
+		scroll-snap-type: y mandatory;
+	}
+
+
+	.section {
+		position: relative;
+		width: 100%;
+		height: 100vh;
+		background-size: cover;
+		scroll-snap-align: start;
+	}
+
+	mark {
+		color: #FF6B00;
+		background: none;
+	}
+
+	.text-wrap {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		height: 100%;
+	}
+
+	img {
+		width: 40%;
+	}
+
+	.text-wrap p {
+		width: 50%;
+		text-align: center;
+		font-size: 1.5rem;
+		font-family: 'Arial';
+	}
+
+	@media screen and (max-width: 600px) {
+		.text-wrap p {
+			width: 80%;
+			text-align: center;
+			font-size: 1.2rem;
+			font-family: 'Arial';
+		}
+		
+	img {
+		width: 70%;
+	}
+	}
+
+	@keyframes scroll {
+	0% { transform: translateY(0); }
+	100% { transform: translateY(-100%); }
+	}
 </style>
