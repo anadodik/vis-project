@@ -390,9 +390,16 @@
 
 
 <div class="fullpage">
+
 	<div class="section">
-		<div class="text-wrap">
-			<h1 style="font-size: 6rem;">Policy ---> <mark>Reality</mark>
+		<div class="text-wrap" style="top: 50%">
+			<h1 style="font-size: 6rem;">Policy &#10230; <mark>Reality</mark>
+			</h1>
+			<h1 style="font-size: 7rem; "> </h1>
+			<h1 style="font-size: 1.5rem; position: absolute; bottom: 50px;"> April Anlage, Ana Dodik, Gabriel Manso, Beatriz Yankelevich
+			</h1>
+			<h1 style="font-size: 1.5rem;position: absolute; bottom: 10px;">This project was developed with guidance and feedback from the 
+				<a href="https://www.mapc.org/">Metropolitan Area Planning Commission (MAPC)</a>.
 			</h1>
 		</div>
 
@@ -400,52 +407,79 @@
 
 	<div class="section">
 		<div class="text-wrap"  style="top: 35%">
-			<h1 style="font-size: 3rem;">Massachusetts has the <mark>5th most expensive</mark> housing prices in the country.</h1>
-			<h1>
+			<h1 style="font-size: 3rem;">Massachusetts has the <mark>5th most expensive</mark> housing prices in the country.<sup>1</sup></h1>
+			<h1 style="font-size: 1.6rem;">
 				Nearly <mark>half</mark> of the state’s renters are <mark>rent-burdened</mark> while a
-				<mark>quarter</mark> are <mark>severely rent-burdened</mark>.
+				<mark>quarter</mark> are <mark>severely rent-burdened.</mark><sup>2</sup>
 			</h1>
-			<h1 style="font-size: 1.6rem;">Our housing market is extremely saturated with <mark>rental vacancy rates at just 2.4%</mark>.
+			<h1 style="font-size: 1.6rem;">Our housing market is extremely saturated with <mark>rental vacancy rates at just 2.4%.</mark><sup>3</sup> This low vacancy rate is associated with higher prices.
 			</h1>
 			<h1 style="font-size: 1.6rem;">There is estimated to be a shortage of <mark>125,000-200,000 housing units by 2030</mark>, with <mark>35,000-110,000 new
-				units</mark> required just to meet current demand.
+				units</mark> required just to meet current demand.<sup>4</sup>
 			</h1>
 
 		</div>
-		<img src="home.png" alt="home" style="position: absolute; bottom: 0; right: 0; width: 35%;">
+		<figure>
+			<img src="home.png" alt="home" style="position: absolute; bottom: 0; right: 0; width: 35%;">
+			<h1 style="position: absolute; bottom: 0px;">
+				<p id="footnote-1" style="font-size: 0.8rem;"><sup>1</sup><i><a href="https://www.forbes.com/home-improvement/features/states-with-highest-home-prices/">Forbes</a></i>, <i><a href="https://www.forbes.com/advisor/mortgages/average-rent-by-state/">Forbes</a></i><br>
+				<sup>2</sup><i><a href="https://www.jchs.harvard.edu/ARH_2017_cost_burdens_by_state_total">Joint Center for Housing Studies of Harvard University</a></i><br>
+				<sup>3</sup><i><a href="https://www.mass.gov/doc/future-of-work-in-massachusetts-report/download">Mass.gov</a></i><br>
+				<sup>4</sup><i><a href="https://www.mhp.net/news/2024/construction-costs-and-affordability">The Massachusetts Housing Partnership</a></i></p>
+			</h1>
+			<figcaption></figcaption>
+		</figure>
 
 	</div>
 	<div class="section">
 		<div class="text-wrap"  style="top: 50%">
-			<h1 style="font-size: 1.85rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
+			<h1 style="font-size: 2.5rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
 			</h1>
 			<h1 style="font-size: 1.4rem;">
 				One way to encourage this is to ensure that local laws allow for <mark>higher density housing*</mark>.
 			</h1>
-
-			<img src="home_2.png" alt="home" style="width: 70%; padding-top: 50px;">
-			<h1 style="font-size: .7rem;">
-				*Housing density can be defined as the average number of dwelling units per acre (du/ac).
+			<figure>
+				<img src="home_2.png" alt="home" style="width: 70%; padding-top: 50px;">
+				<figcaption>source</figcaption>
+			</figure>
+			<h1 style="font-size: 1.3rem;">
+				<mark>*</mark>Housing density can be defined as the average number of dwelling units per acre (du/ac).
 			</h1>
 		</div>
+	</div>
 
+	<div class="section">
+		<div class="text-wrap"  style="top: 30%">
+			<h1 style="font-size: 3rem;">Can zoning for <mark>denser housing</mark> really make a difference?
+			</h1>
+			<h1 style="font-size: 1.4rem;">
+				Let's take a look at the relationship between zoned housing density and population density (number of people per square mile) in the Boston area.
+			</h1>
+			<figure>
+				<img src="" alt="graph" style="width: 65%;">
+				<figcaption>Higher density zoning is highly correlated with higher population density - more dwelling units can house more people!</figcaption>
+			</figure>
+		</div>
 	</div>
 	<div class="section">
 		<div class="text-wrap" style="font-size: 1.5rem;">
-			<h1>How might <mark>zoning</mark> allow for more <mark>density</mark>?</h1>
+			<h1><i>How</i> might <mark>zoning</mark> allow for more <mark>density</mark>?</h1>
 		</div>
 
 	</div>
 	<div class="section">
 		<div class="text-wrap" style="top: 50%">
-			<h1>One example of increasing neighborhood density is building an <mark>accessory dwelling unit (ADU)</mark>.
+			<h1 style="font-size: 2.5rem;">One example of increasing neighborhood density is building an <mark>accessory dwelling unit (ADU)</mark>.
 			</h1>
-			<img src="houses.png" alt="home" style="width: 75%; padding-top: 20px; padding-bottom: 20px;">
-			<h1 style="font-size: 1.3rem;">
+			<figure>
+				<img src="houses.png" alt="home" style="width: 85%; padding-top: 20px; padding-bottom: 20px;">
+				<figcaption>Example ADU configurations, courtesy of <a href="https://www.bostonplans.org/zoning/zoning-initiatives/citywide-adu-zoning">Boston Planning and Development Agency</a></figcaption>
+			</figure>
+			<h1 style="font-size: 1.6rem;">
 				Sometimes called “granny flats”, ADU’s can introduce some <mark>gentle density</mark> into a neighborhood and
-				often increase property values. They can allow for multi-generational living or even be rented out.
+				often increase property values, even allowing for multi-generational living.
 			</h1>
-			<h1 style="font-size: 2.05rem;">ADU’s are often <mark>prohibited by local laws</mark>, but new laws to allow ADU’s have recently been adopted in
+			<h1 style="font-size: 1.6rem;">ADU’s are often <mark>prohibited by local laws</mark>, but new laws to allow ADU’s have recently been adopted in
 				places like Somerville!
 			</h1>
 
@@ -453,17 +487,18 @@
 	</div>
 	<div class="section">
 		<div class="text-wrap" style="top: 50%">
-			<h1 style="font-size: 1.5rem;">
+			<h1 style="font-size: 2.5rem;">
 				Another example of density-friendly adaptations are <mark>single family home conversions</mark>.
 			</h1>
+
+			<figure>
+				<img src="site_plan_condo.jpeg" alt="home" style="width: 60%;">
+				<figcaption>Example layout of a multi-unit conversion, courtesy of <a href="https://living-little.mapc.org/sfc#select">MAPC</a>. For more information see <a href="https://living-little.mapc.org/">Living Little</a>.</figcaption>
+			</figure>
 			<h1 style="font-size: 1.5rem;">
-				This involves renovating a single house into multiple individual units.
+				This involves renovating a single house into <mark>multiple individual units</mark>, often leaving the exterior of the home to blend right in with the rest of the neighborhood.
 			</h1>
-			<img src="site_plan_condo.jpeg" alt="home" style="width: 65%;">
-			<h1  style="font-size: 1rem; padding-top: 20px;">
-				These homes often blend right in with the rest of the neighborhood, even preserving some historic homes.
-			</h1>
-			<h1 style="font-size: 1rem;">
+			<h1 style="font-size: 1.5rem;">
 				In an area that is zoned for single family homes only, this type of conversion would not be possible because it would exceed the allowable dwelling units per acre. 
 			</h1>
 
@@ -471,17 +506,18 @@
 	</div>
 	<div class="section">
 		<div class="text-wrap" style="font-size: 1.5rem;">
-			<h1>What do different levels of <mark>housing density</mark> look like in the Boston area?</h1>
+			<h1><i>What</i> do different levels of <mark>housing density</mark> look like in the Boston area?</h1>
 		</div>
 
 	</div>
 	<div class="section">
 		<div class="text-wrap" style="top: 50%;">
-			<h1 style="font-size: 1.3rem;">
-				<mark style="font-size: 2.2rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
+			<h1 style="font-size: 2rem;">
+				<mark style="font-size: 3.2rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
 			</h1>
-			<img src="street1.png" alt="home" style="width: 90%; padding-top: 20px;">
-			<h1 style="font-size: .9rem;  padding-top: 10px;">
+			<!-- <img src="street1.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
+			<img src="milton_combined.png" alt="milton street view" style="width: 100%; padding-top: 20px;">
+			<h1 style="font-size: 1.4rem;  padding-top: 10px;">
 				Average density: <u>1.2 du/ac</u>.
 			</h1>
 
@@ -490,11 +526,12 @@
 
 	<div class="section">
 		<div class="text-wrap" style="top: 50%;">
-			<h1 style="font-size: 1.3rem;">
-				<mark style="font-size: 2.2rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
+			<h1 style="font-size: 2rem;">
+				<mark style="font-size: 3.2rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
 			</h1>
-			<img src="street2.png" alt="home" style="width: 90%; padding-top: 20px;">
-			<h1 style="font-size: .9rem;  padding-top: 10px;">
+			<!-- <img src="street2.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
+			<img src="waltham_combined.png" alt="waltham street view" style="width: 100%; padding-top: 20px;">
+			<h1 style="font-size: 1.4rem;  padding-top: 10px;">
 				Average density: <u>2.2 du/ac</u>.
 			</h1>
 
@@ -504,11 +541,12 @@
 
 	<div class="section">
 		<div class="text-wrap" style="top: 50%;">
-			<h1 style="font-size: 1.3rem;">
-				<mark style="font-size: 2.2rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
+			<h1 style="font-size: 2rem;">
+				<mark style="font-size: 3.2rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
 			</h1>
-			<img src="street3.png" alt="home" style="width: 90%; padding-top: 20px;">
-			<h1 style="font-size: .9rem;  padding-top: 10px;">
+			<!-- <img src="street3.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
+			<img src="cambridge_combined.png" alt="cambridge street view" style="width: 100%; padding-top: 20px;">
+			<h1 style="font-size: 1.4rem;  padding-top: 10px;">
 				Average density: <u>3.4 du/ac</u>.
 			</h1>
 
@@ -927,5 +965,15 @@
 	@keyframes scroll {
 	0% { transform: translateY(0); }
 	100% { transform: translateY(-100%); }
+	}
+
+	figcaption {
+	background-color: none;
+	color: #595959;
+	font-family: 'Arial';
+	font-style: italic;
+	padding: 2px;
+	text-align: center;
+	font-size: 1rem
 	}
 </style>
