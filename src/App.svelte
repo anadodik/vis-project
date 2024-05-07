@@ -10,6 +10,7 @@
 	import * as turf from "@turf/turf";
 	import MiniSearch from "minisearch";
 	import { computePosition, autoPlacement, offset } from "@floating-ui/dom";
+	import { regressionLinear } from 'd3-regression';
 	
 	let icon = faXmark;
 	let map;
@@ -27,6 +28,7 @@
 	let minisearch;
 	let data;
 	let densityData;
+	let densityData2;
 	let dataLookup = {};
 	let geography;
 	$: visToggle = true;
@@ -64,8 +66,8 @@
 		const initialState = { lng: lng, lat: lat, zoom: zoom };
 		const container = document.querySelector('.fullpage');
 		const items = document.querySelectorAll('.section');
-
-		container.addEventListener('wheel', (event) => {
+		
+		container.addEventListener('DOMMouseScroll', (event) => {
 		event.preventDefault();
 		const delta = event.deltaY;
 
@@ -99,15 +101,132 @@
 				};
 			});
 		});
-		// densityData.forEach((datum) => {
-		// 	console.log(densityData)
-		// 	dataLookup[datum.muni_id] = {
-		// 		...dataLookup[datum.muni_id],
-		// 		avg_zoned_density: datum.avg_zoned_density,
-		// 		avg_actual_density: datum.avg_actual_density,
-		// 	};
-		// });
-		// console.log(JSON.stringify(dataLookup));
+
+		// REG PLOT ##########################################
+
+		densityData2 = await d3.csv("agg_density.csv", d => ({
+			municipal: d.municipal,
+			avg_zoned_density: +d.avg_zoned_density,
+			density_2020: +d.density_2020
+		}));
+
+		// Calculate log2 for density values
+		densityData2.forEach(d => {
+			d.log_avg_zoned_density = Math.log2(d.avg_zoned_density);
+			d.log_density_2020 = Math.log2(d.density_2020);
+		});
+
+		const svgWidth = 800;
+		const svgHeight = 450;
+		const margins = { top: 20, right: 20, bottom: 70, left: 70 };
+
+		const svg = d3.select("#chart")
+					.append("svg")
+					.attr("width", svgWidth)
+					.attr("height", svgHeight);
+
+		// Define scales
+		const x = d3.scaleLinear()
+					.domain([-0.5, 6])
+					.range([margins.left, svgWidth - margins.right]);
+		const y = d3.scaleLinear()
+					.domain([7.5, 15.5]) 
+					.range([svgHeight - margins.bottom, margins.top]);
+
+		// Define axes with custom tick labels
+		const xAxis = d3.axisBottom(x).tickValues([0, 1, 2, 3, 4, 5]).tickPadding(10);
+		const yAxis = d3.axisLeft(y).tickValues([8, 10, 12, 14]).tickPadding(5);
+
+		svg.append("g")
+			.attr("transform", `translate(0,${svgHeight - margins.bottom})`)
+			.call(xAxis)
+			.selectAll(".tick text")
+			.call(createSuperscript, x);
+
+			svg.append("g")
+			.attr("transform", `translate(${margins.left},0)`)
+			.call(yAxis)
+			.selectAll(".tick text")
+			.call(createSuperscript, y);
+
+		function createSuperscript(selection) {
+		selection.each(function(d) {
+			const text = d3.select(this);
+			const parts = `2^${Math.round(d)}`.split("^");
+			text.text('');  
+			text.append('tspan')
+				.attr('font-size', '18px')
+				.text(parts[0]);
+			text.append('tspan')
+				.attr('baseline-shift', 'super')
+				.attr('font-size', '12px')
+				.text(parts[1]);
+		});
+		}
+
+		// Tooltip setup
+		const tooltip = d3.select("body").append("div")
+						.attr("class", "tooltip")
+						.style("position", "absolute")
+						.style("visibility", "hidden")
+						.style("background", "white")
+						.style("border", "solid 1px black")
+						.style("padding", "5px");
+
+		// Draw points and attach mouse events for tooltips
+		svg.selectAll(".point")
+			.data(densityData2)
+			.enter()
+			.append("circle")
+			.attr("class", "point")
+			.attr("cx", d => x(d.log_avg_zoned_density))
+			.attr("cy", d => y(d.log_density_2020))
+			.attr("r", 5)
+			.on("mouseover", (event, d) => {
+				tooltip.style("visibility", "visible")
+						.html(`<b>Municipal</b>: ${d.municipal}<br/><b>Density 2020 (sq mi)</b>: ${d.density_2020}`);
+			})
+			.on("mousemove", event => {
+				tooltip.style("top", (event.pageY - 10) + "px")
+						.style("left", (event.pageX + 10) + "px");
+			})
+			.on("mouseout", () => {
+				tooltip.style("visibility", "hidden");
+			});
+
+		// Compute and draw regression line
+		const reg = regressionLinear()
+					.x(d => d.log_avg_zoned_density)
+					.y(d => d.log_density_2020);
+		const line = reg(densityData2);
+
+		svg.append("path")
+			.datum(line)
+			.attr("fill", "none")
+			.attr("stroke", "#FF6B00")
+			.attr("stroke-width", 4)
+			.attr("d", d3.line()
+							.x(d => x(d[0]))
+							.y(d => y(d[1])));
+
+		// Adding x-axis title
+		svg.append("text")
+			.style("font-weight", "bold")
+			.attr("text-anchor", "end")
+			.attr("x", 500)
+			.attr("y", svgHeight - 25)
+			.text("Avg. Zoned Density");
+
+		// Adding y-axis title
+		svg.append("text")
+			.style("font-weight", "bold")	
+			.attr("text-anchor", "end")
+			.attr("transform", "rotate(-90)")
+			.attr("y", 15)
+			.attr("x", -(margins.top + 30))
+			.text("Census Density (Population Area / Density)");
+		
+		// REG PLOT ##########################################
 
 		geography = await d3.json(
 			"ma_municipalities.geojson",
@@ -396,9 +515,9 @@
 			<h1 style="font-size: 6rem;">Policy &#10230; <mark>Reality</mark>
 			</h1>
 			<h1 style="font-size: 7rem; "> </h1>
-			<h1 style="font-size: 1.5rem; position: absolute; bottom: 50px;"> April Anlage, Ana Dodik, Gabriel Manso, Beatriz Yankelevich
+			<h1 style="font-size: 1.5rem; position: absolute; top: 51%;"> April Anlage, Ana Dodik, Gabriel Manso, Beatriz Yankelevich
 			</h1>
-			<h1 style="font-size: 1.5rem;position: absolute; bottom: 10px;">This project was developed with guidance and feedback from the 
+			<h1 style="font-size: 1rem; position: absolute; bottom: 20px;">This project was developed with guidance and feedback from the 
 				<a href="https://www.mapc.org/">Metropolitan Area Planning Commission (MAPC)</a>.
 			</h1>
 		</div>
@@ -414,33 +533,36 @@
 			</h1>
 			<h1 style="font-size: 1.6rem;">Our housing market is extremely saturated with <mark>rental vacancy rates at just 2.4%.</mark><sup>3</sup> This low vacancy rate is associated with higher prices.
 			</h1>
-			<h1 style="font-size: 1.6rem;">There is estimated to be a shortage of <mark>125,000-200,000 housing units by 2030</mark>, with <mark>35,000-110,000 new
+			<h1 style="font-size: 1.5rem;">There is estimated to be a shortage of <mark>125,000-200,000 housing units by 2030</mark>, with <mark>35,000-110,000 new
 				units</mark> required just to meet current demand.<sup>4</sup>
 			</h1>
 
 		</div>
 		<figure>
 			<img src="home.png" alt="home" style="position: absolute; bottom: 0; right: 0; width: 35%;">
-			<h1 style="position: absolute; bottom: 0px;">
-				<p id="footnote-1" style="font-size: 0.8rem;"><sup>1</sup><i><a href="https://www.forbes.com/home-improvement/features/states-with-highest-home-prices/">Forbes</a></i>, <i><a href="https://www.forbes.com/advisor/mortgages/average-rent-by-state/">Forbes</a></i><br>
-				<sup>2</sup><i><a href="https://www.jchs.harvard.edu/ARH_2017_cost_burdens_by_state_total">Joint Center for Housing Studies of Harvard University</a></i><br>
-				<sup>3</sup><i><a href="https://www.mass.gov/doc/future-of-work-in-massachusetts-report/download">Mass.gov</a></i><br>
-				<sup>4</sup><i><a href="https://www.mhp.net/news/2024/construction-costs-and-affordability">The Massachusetts Housing Partnership</a></i></p>
-			</h1>
-			<figcaption></figcaption>
-		</figure>
 
+			<figcaption style="font-size: 0.8rem; position: absolute; bottom: 0px; right: 50px;">SOURCE: <a href="https://apps.bostonglobe.com/2023/10/special-projects/spotlight-boston-housing/single-family-zoning/?s_campaign=audience:reddit">Globe reporting</a>. Illustrations by Guillaume Kurkdjian.</figcaption>
+		</figure>
+		<h1 style="position: absolute; bottom: 0px; left: 15px;">
+			<p id="footnote-1" style="font-size: 0.8rem; text-align: left" >
+				References: <br><br>
+				<sup>&emsp; 1</sup><i><a href="https://www.forbes.com/home-improvement/features/states-with-highest-home-prices/">Forbes</a></i>, <i><a href="https://www.forbes.com/advisor/mortgages/average-rent-by-state/">Forbes</a></i><br>
+				<sup>&emsp; 2</sup><i><a href="https://www.jchs.harvard.edu/ARH_2017_cost_burdens_by_state_total">Joint Center for Housing Studies of Harvard University</a></i><br>
+				<sup>&emsp; 3</sup><i><a href="https://www.mass.gov/doc/future-of-work-in-massachusetts-report/download">Mass.gov</a></i><br>
+				<sup>&emsp; 4</sup><i><a href="https://www.mhp.net/news/2024/construction-costs-and-affordability">The Massachusetts Housing Partnership</a></i>
+			</p>
+		</h1>
 	</div>
 	<div class="section">
 		<div class="text-wrap"  style="top: 50%">
-			<h1 style="font-size: 2.5rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
+			<h1 style="font-size: 2.4rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
 			</h1>
 			<h1 style="font-size: 1.4rem;">
 				One way to encourage this is to ensure that local laws allow for <mark>higher density housing*</mark>.
 			</h1>
 			<figure>
 				<img src="home_2.png" alt="home" style="width: 70%; padding-top: 50px;">
-				<figcaption>source</figcaption>
+				<figcaption style="font-size: 0.8rem;">SOURCE: <a href="https://apps.bostonglobe.com/2023/10/special-projects/spotlight-boston-housing/single-family-zoning/?s_campaign=audience:reddit">Globe reporting</a>. Illustrations by Guillaume Kurkdjian.</figcaption>
 			</figure>
 			<h1 style="font-size: 1.3rem;">
 				<mark>*</mark>Housing density can be defined as the average number of dwelling units per acre (du/ac).
@@ -449,14 +571,14 @@
 	</div>
 
 	<div class="section">
-		<div class="text-wrap"  style="top: 30%">
+		<div class="text-wrap"  style="top: 50%">
 			<h1 style="font-size: 3rem;">Can zoning for <mark>denser housing</mark> really make a difference?
 			</h1>
 			<h1 style="font-size: 1.4rem;">
 				Let's take a look at the relationship between zoned housing density and population density (number of people per square mile) in the Boston area.
 			</h1>
 			<figure>
-				<img src="" alt="graph" style="width: 65%;">
+				<div id="chart"></div>		
 				<figcaption>Higher density zoning is highly correlated with higher population density - more dwelling units can house more people!</figcaption>
 			</figure>
 		</div>
@@ -495,10 +617,10 @@
 				<img src="site_plan_condo.jpeg" alt="home" style="width: 60%;">
 				<figcaption>Example layout of a multi-unit conversion, courtesy of <a href="https://living-little.mapc.org/sfc#select">MAPC</a>. For more information see <a href="https://living-little.mapc.org/">Living Little</a>.</figcaption>
 			</figure>
-			<h1 style="font-size: 1.5rem;">
+			<h1 style="font-size: 1.4rem;">
 				This involves renovating a single house into <mark>multiple individual units</mark>, often leaving the exterior of the home to blend right in with the rest of the neighborhood.
 			</h1>
-			<h1 style="font-size: 1.5rem;">
+			<h1 style="font-size: 1.4rem;">
 				In an area that is zoned for single family homes only, this type of conversion would not be possible because it would exceed the allowable dwelling units per acre. 
 			</h1>
 
@@ -513,11 +635,11 @@
 	<div class="section">
 		<div class="text-wrap" style="top: 50%;">
 			<h1 style="font-size: 2rem;">
-				<mark style="font-size: 3.2rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
+				<mark style="font-size: 3rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
 			</h1>
 			<!-- <img src="street1.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
-			<img src="milton_combined.png" alt="milton street view" style="width: 100%; padding-top: 20px;">
-			<h1 style="font-size: 1.4rem;  padding-top: 10px;">
+			<img src="milton_combined_v3.png" alt="milton street view" style="width: 100%; padding-top: 20px;">
+			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>1.2 du/ac</u>.
 			</h1>
 
@@ -526,27 +648,26 @@
 
 	<div class="section">
 		<div class="text-wrap" style="top: 50%;">
-			<h1 style="font-size: 2rem;">
-				<mark style="font-size: 3.2rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
+			<h1 style="font-size: 1.8rem;">
+				<mark style="font-size: 3rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
 			</h1>
 			<!-- <img src="street2.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
-			<img src="waltham_combined.png" alt="waltham street view" style="width: 100%; padding-top: 20px;">
-			<h1 style="font-size: 1.4rem;  padding-top: 10px;">
+			<img src="waltham_combined_v3.png" alt="waltham street view" style="width: 100%; padding-top: 20px;">
+			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>2.2 du/ac</u>.
 			</h1>
-
 		</div>
 	</div>
 
 
 	<div class="section">
 		<div class="text-wrap" style="top: 50%;">
-			<h1 style="font-size: 2rem;">
-				<mark style="font-size: 3.2rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
+			<h1 style="font-size: 1.7rem;">
+				<mark style="font-size: 3rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
 			</h1>
 			<!-- <img src="street3.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
-			<img src="cambridge_combined.png" alt="cambridge street view" style="width: 100%; padding-top: 20px;">
-			<h1 style="font-size: 1.4rem;  padding-top: 10px;">
+			<img src="cambridge_combined_v3.png" alt="cambridge street view" style="width: 100%; padding-top: 20px;">
+			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>3.4 du/ac</u>.
 			</h1>
 
@@ -948,7 +1069,10 @@
 		font-size: 1.5rem;
 		font-family: 'Arial';
 	}
-
+	.tooltip {
+		font-size: 12px;
+		color: #333;
+	}
 	@media screen and (max-width: 600px) {
 		.text-wrap p {
 			width: 80%;
