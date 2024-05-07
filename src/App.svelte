@@ -555,7 +555,7 @@
 	</div>
 	<div class="section">
 		<div class="text-wrap"  style="top: 50%">
-			<h1 style="font-size: 2.4rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
+			<h1 style="font-size: 2rem;">To mitigate the housing crisis, we need to build denser housing and use existing housing stock <mark>as efficiently as possible</mark>.
 			</h1>
 			<h1 style="font-size: 1.4rem;">
 				One way to encourage this is to ensure that local laws allow for <mark>higher density housing*</mark>.
@@ -572,7 +572,7 @@
 
 	<div class="section">
 		<div class="text-wrap"  style="top: 50%">
-			<h1 style="font-size: 3rem;">Can zoning for <mark>denser housing</mark> really make a difference?
+			<h1 style="font-size: 2.2rem;">Can zoning for <mark>denser housing</mark> really make a difference?
 			</h1>
 			<h1 style="font-size: 1.4rem;">
 				Let's take a look at the relationship between zoned housing density and population density (number of people per square mile) in the Boston area.
@@ -597,7 +597,7 @@
 				<img src="houses.png" alt="home" style="width: 85%; padding-top: 20px; padding-bottom: 20px;">
 				<figcaption>Example ADU configurations, courtesy of <a href="https://www.bostonplans.org/zoning/zoning-initiatives/citywide-adu-zoning">Boston Planning and Development Agency</a></figcaption>
 			</figure>
-			<h1 style="font-size: 1.6rem;">
+			<h1 style="font-size: 1.3rem;">
 				Sometimes called “granny flats”, ADU’s can introduce some <mark>gentle density</mark> into a neighborhood and
 				often increase property values, even allowing for multi-generational living.
 			</h1>
