@@ -112,8 +112,8 @@
 
 		// Calculate log2 for density values
 		densityData2.forEach(d => {
-			d.log_avg_zoned_density = Math.log2(d.avg_zoned_density);
-			d.log_density_2020 = Math.log2(d.density_2020);
+			d.log_avg_zoned_density = Math.log10(d.avg_zoned_density);
+			d.log_density_2020 = Math.log10(d.density_2020);
 		});
 
 		const svgWidth = 800;
@@ -121,38 +121,38 @@
 		const margins = { top: 20, right: 20, bottom: 70, left: 70 };
 
 		const svg = d3.select("#chart")
-					.append("svg")
-					.attr("width", svgWidth)
-					.attr("height", svgHeight);
+                  .append("svg")
+                  .attr("width", svgWidth)
+                  .attr("height", svgHeight);
 
-		// Define scales
+		// Define scales based on log10 values
 		const x = d3.scaleLinear()
-					.domain([-0.5, 6])
+					.domain([-.2, 2]) // Adjusted to fit data
 					.range([margins.left, svgWidth - margins.right]);
 		const y = d3.scaleLinear()
-					.domain([7.5, 15.5]) 
+					.domain([2, 5]) // Adjusted to fit data
 					.range([svgHeight - margins.bottom, margins.top]);
 
 		// Define axes with custom tick labels
-		const xAxis = d3.axisBottom(x).tickValues([0, 1, 2, 3, 4, 5]).tickPadding(10);
-		const yAxis = d3.axisLeft(y).tickValues([8, 10, 12, 14]).tickPadding(5);
+		const xAxis = d3.axisBottom(x).tickValues([0, 1, 2, 3]).tickPadding(10);
+		const yAxis = d3.axisLeft(y).tickValues([2, 3, 4, 5]).tickPadding(5);
 
 		svg.append("g")
-			.attr("transform", `translate(0,${svgHeight - margins.bottom})`)
-			.call(xAxis)
-			.selectAll(".tick text")
-			.call(createSuperscript, x);
+		.attr("transform", `translate(0,${svgHeight - margins.bottom})`)
+		.call(xAxis)
+		.selectAll(".tick text")
+		.call(createSuperscript, "10"); // Updated to use log10
 
-			svg.append("g")
-			.attr("transform", `translate(${margins.left},0)`)
-			.call(yAxis)
-			.selectAll(".tick text")
-			.call(createSuperscript, y);
+		svg.append("g")
+		.attr("transform", `translate(${margins.left},0)`)
+		.call(yAxis)
+		.selectAll(".tick text")
+		.call(createSuperscript, "10"); // Updated to use log10
 
-		function createSuperscript(selection) {
+		function createSuperscript(selection, base) {
 		selection.each(function(d) {
 			const text = d3.select(this);
-			const parts = `2^${Math.round(d)}`.split("^");
+			const parts = `${base}^${Math.round(d)}`.split("^");
 			text.text('');  
 			text.append('tspan')
 				.attr('font-size', '18px')
@@ -184,7 +184,7 @@
 			.attr("r", 5)
 			.on("mouseover", (event, d) => {
 				tooltip.style("visibility", "visible")
-						.html(`<b>Municipal</b>: ${d.municipal}<br/><b>Density 2020 (sq mi)</b>: ${d.density_2020}`);
+						.html(`<b>Municipality</b>: ${d.municipal}<br/><b>Census Density 2020 (sq mi)</b>: ${d.density_2020}<br/><b>Avg Zoned Density</b>: ${d.avg_zoned_density.toFixed(2)}`);
 			})
 			.on("mousemove", event => {
 				tooltip.style("top", (event.pageY - 10) + "px")
@@ -224,7 +224,7 @@
 			.attr("transform", "rotate(-90)")
 			.attr("y", 15)
 			.attr("x", -(margins.top + 30))
-			.text("Census Density (Population Area / Density)");
+			.text("Census Density (Population / Area)");
 		
 		// REG PLOT ##########################################
 
