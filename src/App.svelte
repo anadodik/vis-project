@@ -638,7 +638,7 @@
 				<mark style="font-size: 3rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
 			</h1>
 			<!-- <img src="street1.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
-			<img src="milton_combined_v3.png" alt="milton street view" style="width: 100%; padding-top: 20px;">
+			<img src="milton_combined_v4.png" alt="milton street view" style="width: 100%; padding-top: 20px;">
 			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>1.2 du/ac</u>.
 			</h1>
@@ -652,7 +652,7 @@
 				<mark style="font-size: 3rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
 			</h1>
 			<!-- <img src="street2.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
-			<img src="waltham_combined_v3.png" alt="waltham street view" style="width: 100%; padding-top: 20px;">
+			<img src="waltham_combined_v4.png" alt="waltham street view" style="width: 100%; padding-top: 20px;">
 			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>2.2 du/ac</u>.
 			</h1>
@@ -666,7 +666,7 @@
 				<mark style="font-size: 3rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
 			</h1>
 			<!-- <img src="street3.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
-			<img src="cambridge_combined_v3.png" alt="cambridge street view" style="width: 100%; padding-top: 20px;">
+			<img src="cambridge_combined_v4.png" alt="cambridge street view" style="width: 100%; padding-top: 20px;">
 			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>3.4 du/ac</u>.
 			</h1>
