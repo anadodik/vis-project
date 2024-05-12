@@ -11,6 +11,7 @@
 	import MiniSearch from "minisearch";
 	import { computePosition, autoPlacement, offset } from "@floating-ui/dom";
 	import { regressionLinear } from 'd3-regression';
+    import { faToiletPaper } from "@fortawesome/free-solid-svg-icons";
 	
 	let icon = faXmark;
 	let map;
@@ -30,6 +31,9 @@
 	let densityData;
 	let densityData2;
 	let dataLookup = {};
+	let avgTotalDensity;
+	let totalArea = 0;
+	let totalPop = 0;
 	let geography;
 	$: visToggle = true;
 	$: visFeature = "dwellingDensity";
@@ -52,7 +56,12 @@
 	$: console.log(sourceMuni);
 	$: {
 		if (targetMuni && sourceMuni) {
-			counterfactualHousing = Math.floor(dataLookup[targetMuni].area * dataLookup[sourceMuni].density) - dataLookup[targetMuni].pop;
+			if (targetMuni === "total") {
+				counterfactualHousing = Math.floor(totalArea * dataLookup[sourceMuni].density) - totalPop;	
+			}
+			else {
+				counterfactualHousing = Math.floor(dataLookup[targetMuni].area * dataLookup[sourceMuni].density) - dataLookup[targetMuni].pop;
+			}
 		} else {
 			counterfactualHousing = null;
 		}
@@ -286,7 +295,11 @@
 				dataLookup[feature.properties.muni_id]["pop"] = pop;
 				dataLookup[feature.properties.muni_id]["density"] = density;
 				dataLookup[feature.properties.muni_id]["geometry"] = feature.geometry;
+				totalArea += (+area);
+				totalPop += (+pop);
+
 			});
+			avgTotalDensity = totalArea / totalPop;
 			features = features.sort((a,b) => (a.properties.municipal > b.properties.municipal) ? 1 : ((b.properties.municipal > a.properties.municipal) ? -1 : 0))
 			minisearch = new MiniSearch({
 				fields: ["municipal", "muni_id"],
@@ -307,6 +320,8 @@
 			style: `mapbox://styles/mapbox/light-v9`,
 			center: [initialState.lng, initialState.lat],
 			zoom: initialState.zoom,
+			maxZoom: 11.5,
+			minZoom: 8.5,
 			transition: {
 				"duration": 1200,
 				"delay": 0
@@ -389,6 +404,11 @@
 				// hoveredProperties = null;
 				hoveredId = null;
 			});
+			map?.style.stylesheet.layers.forEach(function(layer) {
+				if (layer.type === 'symbol') {
+					map.setLayoutProperty(layer.id,"visibility", "none");
+				}
+			});
 
 			features.forEach(function (feature) {
 				let centroid = turf.centerOfMass(feature.geometry);
@@ -426,12 +446,7 @@
 		} else {
 			cmap = zonedDensityCmap;
 		}
-		if (sourceMuni && targetMuni) {
-			map.style.stylesheet.layers.forEach(function(layer) {
-				if (layer.type === 'symbol') {
-					map.setLayoutProperty(layer.id,"visibility", "none");
-				}
-			});
+		if (sourceMuni && targetMuni && targetMuni !== "total") {
 			let geometry = turf.union(
 				dataLookup[sourceMuni]["geometry"],
 				dataLookup[targetMuni]["geometry"],
@@ -473,12 +488,51 @@
 				]
 			);
 		}
-		else {
-			map.style.stylesheet.layers.forEach(function(layer) {
-				if (layer.type === 'symbol') {
-					map.setLayoutProperty(layer.id, "visibility", "visible");
-				}
+		else if (sourceMuni && targetMuni === "total") {
+			let geometry = dataLookup[sourceMuni]["geometry"];
+			map.fitBounds(turf.bbox(geometry), {
+				padding: { top: 100, bottom: 100, left: 100, right: 100},
+				easing: (t) => {return t*t*t},
+				duration: 1000,
 			});
+			map?.setPaintProperty(
+				'mass-layer',
+				'fill-color',
+				[
+					"step",
+					[
+						"case",
+						// ["==", ["get", "muni_id"], targetMuni], ["get", visFeature], 
+						["==", ["get", "muni_id"], sourceMuni], ["get", visFeature], 
+						-1
+					],
+					"#DDDDDD",0,...cmap
+				]
+			);
+			map?.setPaintProperty(
+				"mass-layer",
+				"fill-opacity",
+				[
+					"*", [
+						"case",
+						["boolean", ["feature-state", "hover"], false],
+						1,
+						0.9,
+					], [
+						"case",
+						// ["==", ["get", "muni_id"], targetMuni], 1, 
+						["==", ["get", "muni_id"], sourceMuni], 1, 
+						0.5,
+					]
+				]
+			);
+		}
+		else {
+			// map.style.stylesheet.layers.forEach(function(layer) {
+			// 	if (layer.type === 'symbol') {
+			// 		map.setLayoutProperty(layer.id, "visibility", "visible");
+			// 	}
+			// });
 			map.fitBounds(turf.bbox(geography), {
 				padding: { top: 10, bottom: 25, left: 15, right: 5 },
 			});
@@ -521,7 +575,6 @@
 				<a href="https://www.mapc.org/">Metropolitan Area Planning Commission (MAPC)</a>.
 			</h1>
 		</div>
-
 	</div>
 
 	<div class="section">
@@ -637,7 +690,6 @@
 			<h1 style="font-size: 2rem;">
 				<mark style="font-size: 3rem; color: #595959;">Milton</mark> is an example of <mark>low-density housing</mark> made up of <u>single-family</u> homes with <u>large yards</u>. 
 			</h1>
-			<!-- <img src="street1.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
 			<img src="milton_combined_v4.png" alt="milton street view" style="width: 100%; padding-top: 20px;">
 			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>1.2 du/ac</u>.
@@ -651,7 +703,6 @@
 			<h1 style="font-size: 1.8rem;">
 				<mark style="font-size: 3rem; color: #595959;">Waltham</mark> is an example of <mark>medium-density housing</mark>, with a mix of <u>single-family</u> homes and <u>gentle density</u> like <u>duplexes</u>. 
 			</h1>
-			<!-- <img src="street2.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
 			<img src="waltham_combined_v4.png" alt="waltham street view" style="width: 100%; padding-top: 20px;">
 			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>2.2 du/ac</u>.
@@ -665,7 +716,6 @@
 			<h1 style="font-size: 1.7rem;">
 				<mark style="font-size: 3rem; color: #595959;">Cambridge</mark> is an example of <mark>high-density housing</mark>, with a mix of <u>multi-family</u> homes, <u>apartments</u>, and <u>mixed-use buildings</u>. 
 			</h1>
-			<!-- <img src="street3.png" alt="home" style="width: 90%; padding-top: 20px;"> -->
 			<img src="cambridge_combined_v4.png" alt="cambridge street view" style="width: 100%; padding-top: 20px;">
 			<h1 style="font-size: 1rem;  padding-top: 10px;">
 				Average density: <u>3.4 du/ac</u>.
@@ -679,14 +729,15 @@
 			<h1 style="font-size: 3rem;">How many more people could we house if we <mark>up-zoned</mark> Massachusetts?
 			</h1>
 		</div>
-
 	</div>
 
 	<div class="section">
 		<div class="map-wrap">
+			<div class="map-content">
 			<div class="sidebar">
 				If
 				<select bind:value={targetMuni} on:change={paintMap}>
+					<option value="total">all of Metro Boston</option>
 					{#each features as feature}
 						<option value={feature.properties.muni_id}>{feature.properties.municipal}</option>
 					{/each}
@@ -699,9 +750,9 @@
 				</select>
 				{#if counterfactualHousing}
 					{#if counterfactualHousing >= 0}
-						we would <b>house {counterfactualHousing}</b> more people.
+						we would <span style="color: #daa520"><b>house {counterfactualHousing}</b></span> more people.
 					{:else}
-						we would <b>displace {-counterfactualHousing}</b> people.
+						we would <span style="color: #daa520"><b>displace {-counterfactualHousing}</b></span> people.
 					{/if}
 					<button type="button" id="resetButton" on:click={()=>{targetMuni = null; sourceMuni = null; paintMap()}}>
 						<Icon class="resetIcon" icon={icon}></Icon>
@@ -739,17 +790,26 @@
 				</div>
 				{/if}
 			</div>
-
-			{#if dataLookup != {} && sourceMuni && targetMuni}
+			
+			
+			{#if dataLookup != {} && ((sourceMuni && targetMuni) || (hoveredId !== null))}
 				<svg width="100%" height="100vh">
 					<style>
 						.text {
 							font: 16px sans-serif;
+							stroke: oklch(20% 0 0);
+							font-weight: 700;
+							fill: oklch(100% 0 0);
+							stroke-width: 0.8px;
+    						stroke-linecap: butt;
 						}
 					</style>
 						{#key mapViewChanged}
 							{#each centroids as centroid}
-								{#if centroid.properties.muni_id == sourceMuni || centroid.properties.muni_id == targetMuni}
+								{#if centroid.properties.muni_id === sourceMuni 
+								|| (centroid.properties.muni_id === targetMuni && targetMuni !== "total")
+								|| (hoveredId !== null && centroid.properties.muni_id === hoveredProperties.muni_id)
+								}
 									<text
 										class="text"
 										dominant-baseline="middle"
@@ -784,18 +844,38 @@
 			</dl>
 			<div class="map" bind:this={mapContainer} />
 		</div>
-
+		</div>
 	</div>
 </div>
 
 <style>
+	.map-wrap {
+		position: absolute;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+	}
+
+	.map-content {
+		position: absolute;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 90%;
+		height: 90%;
+	}
+
 	.map {
 		position: absolute;
 		width: 100%;
 		height: 100%;
+		border-radius: 2%;
+		box-shadow: 0px 0px 5px oklch(50% 0 0);		
 	}
 	svg {
-		background-color: rgb(35 55 75 / 2%);
+		background-color: rgb(0, 0, 0 / 0%);
 		color: #fff;
 		padding: 0 0 0 0;
 		font-family: monospace;
@@ -803,21 +883,10 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		border: 2px dashed #daa520;
+		/* border: 2px dashed #daa520; */
 		pointer-events: none;
 	}
 
-	svg circle {
-		color: #fff;
-		padding: 0 0 0 0;
-		font-family: monospace;
-		z-index: 1;
-		position: absolute;
-		top: 0;
-		left: 0;
-		border: 2px dashed rgb(218, 165, 32 / 50%);
-		pointer-events: none;
-	}
 	.sidebar {
 		background-color: rgb(35 55 75 / 90%);
 		color: #fff;
@@ -829,6 +898,7 @@
 		left: 0;
 		margin: 12px;
 		border-radius: 4px;
+		box-shadow: 0px 0px 5px oklch(50% 0 0);
 	}
 
 	.sidebar select {
@@ -861,7 +931,7 @@
 		margin: 12px;
 		
 		display: grid;
-		grid-auto-columns: 8em;
+		grid-auto-columns: 10em;
 		grid-auto-flow: column;
 		z-index: 3;
 		background-color: rgb(255 255 255 / 100%);
